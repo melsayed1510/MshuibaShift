@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+
+<style>
+
+/* ================== GENERAL STYLING ================== */
+
+body{
+    font-family:'Cairo';
+    font-weight:700;
+    background:#f4f6f9;
+    margin:10px;
+}
+
+table{border-collapse:collapse}
+td{text-align:center}
+
+/* ================== MONTHLY SHIFT CALENDAR ================== */
+
+.monthlyShiftWrapper{
+width:70%;
+max-width:none;
+margin:auto;
+}
+
+.monthlyShiftTable{width:100%}
+
+.monthlyShiftTable td{
+    width:90px;
+    height:65px;
+    position:relative;
+    font-size:16px;
+    border:2px solid #aaa;
+}
+
+.monthlyShiftTable td.shiftEmptyCell{
+    border:none;
+    background:transparent;
+}
+
+.shiftDayNumber{
+    position:absolute;
+    top:4px;
+    right:6px;
+    font-size:16px;
+}
+
+.monthlyShiftCode{
+    font-size:20px;
+    margin-top:18px;
+}
+
+.weekDayHeader{
+    background:#eee;
+    border:1px solid #aaa;
+}
+
+/* ================== SHIFT COLORS ================== */
+
+.shiftA{background:#fde1e1}
+.shiftB{background:#e2f5e2}
+.shiftC{background:#fff3cd}
+
+
+
+/* ================== UI ================== */
+
+.monthlyShiftTopbar{
+    background:white;
+    padding:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+    margin-bottom:20px;
+    text-align:center;
+}
+
+#monthlyShiftTitle{
+    font-size:22px;
+    text-align:center;
+    margin-bottom:20px;
+    padding-bottom:8px;
+    border-bottom:2px solid #ddd;
+}
+
+.monthlyShiftFooter{
+    border-top:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+    font-size:13px;
+    background:#fafafa;
+    margin-top:10px;
+}
+
+/* =============================
+   الفوتر
+=============================*/
+.footer{
+    border-top:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+    font-size:13px;
+    color:#666;
+    background:#fafafa;
+}
+
+.icon{
+    width:16px;
+    margin:0 6px;
+    vertical-align:middle;
+    opacity:.7;
+}
+.icon:hover{opacity:1;}
+
+/* ================== PRINT ================== */
+
+@page{
+    size:A4 landscape;
+    margin:15mm;
+}
+
+@media print{
+    body{margin:0;background:white}
+    .monthlyShiftTopbar{display:none}
+    .monthlyShiftWrapper{max-width:none}
+    td{font-size:10px}
+}
+
+.monthlyShiftPdfMode td{font-size:18px !important;}
+.monthlyShiftPdfMode .shiftDayNumber{font-size:22px !important;}
+.monthlyShiftPdfMode .monthlyShiftCode{font-size:26px !important;}
+.monthlyShiftPdfMode .monthlyShiftWrapper{width:100% !important;}
+
+.pdf-circle-btn{
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    border:2px solid #d5d5d5;
+    background:#f4f6f9;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.25s ease;
+    color:#8a8f96;
+}
+
+.pdf-circle-btn i{
+    font-size:18px;
+    line-height:1;
+}
+
+.pdf-circle-btn span{
+    font-size:9px;
+    font-weight:700;
+    margin-top:-2px;
+    letter-spacing:.5px;
+}
+
+.pdf-circle-btn:hover{
+    background:#e9eef6;
+    color:#1F5FA8;
+    border-color:#1F5FA8;
+    transform:translateY(-2px);
+}
+
+.pdf-circle-btn:active{
+    transform:scale(.95);
+}
+/* =========================
+   ⭐ نبض اليوم الحالي (حل نهائي)
+========================= */
+
+/* =========================
+   تمييز اليوم الحالي
+========================= */
+
+.shiftToday{
+    position:relative;
+    overflow:visible;
+    z-index:1;
+}
+
+/* طبقة الموجة */
+.shiftToday::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:0;
+    pointer-events:none;
+}
+
+/* طبقة التغميق */
+.shiftToday::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:0;
+    z-index: -1;
+}
+
+/* =========================
+   تشغيل التأثير حسب لون الشيفت
+========================= */
+
+.shiftToday.shiftA::after{
+    animation:pulseA 1.4s ease-out infinite;
+}
+.shiftToday.shiftB::after{
+    animation:pulseB 1.4s ease-out infinite;
+}
+.shiftToday.shiftC::after{
+    animation:pulseC 1.4s ease-out infinite;
+}
+
+.shiftToday.shiftA::before{
+    background:#f6bcbc; /* وردي أغمق */
+    animation:darkFade 1.4s ease-out infinite;
+}
+
+.shiftToday.shiftB::before{
+    background:#cfeecd; /* أخضر أغمق */
+    animation:darkFade 1.4s ease-out infinite;
+}
+
+.shiftToday.shiftC::before{
+    background:#ffe49a; /* أصفر أغمق */
+    animation:darkFade 1.4s ease-out infinite;
+}
+
+/* =========================
+   موجة الضوء
+========================= */
+
+@keyframes pulseA{
+  0%   { box-shadow:0 0 0 0 rgba(253,120,120,.85); }
+  70%  { box-shadow:0 0 0 32px rgba(253,120,120,0); }
+  100% { box-shadow:0 0 0 0 rgba(253,120,120,0); }
+}
+
+@keyframes pulseB{
+  0%   { box-shadow:0 0 0 0 rgba(120,210,140,.85); }
+  70%  { box-shadow:0 0 0 32px rgba(120,210,140,0); }
+  100% { box-shadow:0 0 0 0 rgba(120,210,140,0); }
+}
+
+@keyframes pulseC{
+  0%   { box-shadow:0 0 0 0 rgba(255,210,100,.85); }
+  70%  { box-shadow:0 0 0 32px rgba(255,210,100,0); }
+  100% { box-shadow:0 0 0 0 rgba(255,210,100,0); }
+}
+
+/* =========================
+   تغميق متزامن مع خروج الموجة
+========================= */
+
+@keyframes darkFade{
+
+  /* اللون الطبيعي */
+  0%   { opacity:0; }
+
+  /* بداية التغميق */
+  35%  { opacity:.35; }
+
+  /* الذروة */
+  60%  { opacity:.45; }
+
+  /* الرجوع التدريجي */
+  85%  { opacity:.2; }
+
+  /* العودة للوضع الطبيعي */
+  100% { opacity:0; }
+}
+
+
+
+.monthlyShiftNames{
+ font-size:12px;
+ line-height:1.25;
+ margin-top:8px;
+ padding:0 4px;
+}
+.monthlyShiftPdfMode .monthlyShiftNames{font-size:16px !important;}
+
+</style>
+</head>
+
+<body>
+
+<div class="monthlyShiftTopbar">
+<div class="d-flex justify-content-center gap-3">
+
+<input type="number"
+       id="monthlyShiftYearInput"
+       class="form-control w-auto">
+
+<select id="monthlyShiftMonthSelect"
+        class="form-select w-auto"></select>
+
+<button id="monthlyShiftPdfBtn"
+        class="pdf-circle-btn"
+        onclick="exportMonthlyShiftPDF()">
+    <i class="bi bi-cloud-arrow-down"></i>
+    <span>PDF</span>
+</button>
+
+
+
+</div>
+</div>
+
+<div id="monthlyShiftPrintArea">
+
+<h4 id="monthlyShiftTitle"></h4>
+
+<div class="monthlyShiftWrapper">
+<table id="monthlyShiftTable" class="monthlyShiftTable"></table>
+</div>
+
+</div>
+
+<footer class="monthlyShiftFooter">
+<span id="monthlyShiftFooterText"></span>
+<strong> Mohamed Elsayed </strong>
+<span class="social-icons">
+<a href="https://www.instagram.com/m.elsayed1510/" target="_blank">
+<img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" class="icon">
+</a>
+
+<a href="https://www.facebook.com/mohamed.elsayed.mtwaly/" target="_blank">
+<img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/facebook.svg" class="icon">
+</a>
+</span>
+</footer>
+
+<!-- ================== LIBRARIES ================== -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* ================= LANGUAGE FROM MAIN PAGE ================= */
+const params = new URLSearchParams(window.location.search);
+const lang = params.get("lang") || "ar";
+document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+
+autofillYear();
+
+/* ================= DATA (Months/Days) ================= */
+const MONTHLY_SHIFT_MONTHS_AR = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const MONTHLY_SHIFT_MONTHS_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTHLY_SHIFT_DAYS_AR = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const MONTHLY_SHIFT_DAYS_EN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+/* =========================================================
+   ✅ SHIFT CONFIG (EDIT HERE ONLY)
+   - لتعديل/إضافة مجموعات: عدّل كائن SHIFT_CONFIG فقط.
+   - كل شيفت له:
+     start: تاريخ بداية الشيفت
+     groups: مصفوفة مجموعات (كل مجموعة = مصفوفة أسماء)
+   ========================================================= */
+const SHIFT_CONFIG = {
+  A: {
+    start: new Date(2026, 2, 2), // 02/03/2026
+    groups: [
+      ["محمد النقي","ناصر المري"],                 // A1
+      [ "احمد الاحمد","شافي العجمي"],              // A2
+      ["احمد عبدالخالق", "رضا جندل"],              // A3
+    ],
+  },
+  B: {
+    start: new Date(2026, 2, 3), // 03/03/2026
+    groups: [
+      ["عبدالله الهاجري", "عبدالعزيز الهاجري", "يوسف العازمي", "محمد الكندري"], // B1
+      ["جراح الكاظمي","احمد السويح","ناصر الخميس"],                           // B2
+    ],
+  },
+  C: {
+    start: new Date(2026, 2, 4), // 04/03/2026
+    groups: [
+      ["عبدالعزيز القلاف","راشد الحريص","ناصر الكندري"], // C1
+      ["عيسي الكندري", "سلمان مال الله", "سبع الشمري"],   // C2
+    ],
+  },
+};
+
+// ترتيب الشيفت اليومي حسب بدايات A/B/C (02/03 -> A, 03/03 -> B, 04/03 -> C)
+const SHIFT_DAILY_ORDER = ["A", "B", "C"]; 
+const SHIFT_DAILY_BASE  = SHIFT_CONFIG.A.start; // 02/03/2026
+
+// كل مجموعة تستمر 3 أيام داخل نفس الشيفت (تقسيمك)
+const GROUP_BLOCK_DAYS = 3;
+
+/* ================= FILL MONTHS ================= */
+function fillMonthlyShiftMonths(){
+  const months = (lang === "ar") ? MONTHLY_SHIFT_MONTHS_AR : MONTHLY_SHIFT_MONTHS_EN;
+  monthlyShiftMonthSelect.innerHTML = "";
+  months.forEach((m, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = m;
+    monthlyShiftMonthSelect.appendChild(opt);
+  });
+  monthlyShiftMonthSelect.value = new Date().getMonth();
+}
+
+/* ================= SHIFT + GROUP CALC ================= */
+function daysBetween(d1, d2){
+  // دالة آمنة لحساب فرق الأيام (بدون تأثير فرق التوقيت)
+  const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+  const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+  return Math.floor((utc1 - utc2) / 86400000);
+}
+
+function getShiftForDate(date){
+  const diff = daysBetween(date, SHIFT_DAILY_BASE);
+  const idx = (diff % 3 + 3) % 3;
+  return SHIFT_DAILY_ORDER[idx];
+}
+
+function getGroupForDate(shiftKey, date){
+  const conf = SHIFT_CONFIG[shiftKey];
+  const diff = daysBetween(date, conf.start);
+  const occ  = Math.floor(diff / GROUP_BLOCK_DAYS); // يتغير كل 3 أيام داخل الشيفت
+  const gi   = (occ % conf.groups.length + conf.groups.length) % conf.groups.length;
+  return conf.groups[gi];
+}
+
+function shiftClassFromKey(k){
+  return k === "A" ? "shiftA" : (k === "B" ? "shiftB" : "shiftC");
+}
+
+/* ================= GENERATE ================= */
+function generateMonthlyShiftSchedule(){
+  const year = parseInt(monthlyShiftYearInput.value);
+  const month = parseInt(monthlyShiftMonthSelect.value);
+
+  const months = (lang === "ar") ? MONTHLY_SHIFT_MONTHS_AR : MONTHLY_SHIFT_MONTHS_EN;
+  const days = (lang === "ar") ? MONTHLY_SHIFT_DAYS_AR : MONTHLY_SHIFT_DAYS_EN;
+
+  monthlyShiftFooterText.innerText = (lang === "ar") ? "تم التصميم والتطوير بواسطة" : "Designed & Developed by";
+  monthlyShiftTitle.innerText = (lang === "ar")
+    ? `جدول نوبات شهري – إدارة صيانة المعدات – ميناء الشعيبة – شهر ${months[month]} - لعام ${year}`
+    : `Monthly Shift Schedule – Equipment Maintenance Dept., Shuaiba Port – ${months[month]} ${year}`;
+
+  renderMonthlyShift(year, month, days);
+}
+
+/* ================= DRAW ================= */
+function renderMonthlyShift(year, month, days){
+  monthlyShiftTable.innerHTML = "";
+
+  // header
+  const header = monthlyShiftTable.insertRow();
+  days.forEach(d => {
+    const c = header.insertCell();
+    c.className = "weekDayHeader";
+    c.innerText = d;
+  });
+
+  const first = new Date(year, month, 1).getDay();
+  const total = new Date(year, month + 1, 0).getDate();
+
+  let day = 1;
+  for(let r = 0; r < 6; r++){
+    const row = monthlyShiftTable.insertRow();
+    for(let c = 0; c < 7; c++){
+      const cell = row.insertCell();
+
+      if(r === 0 && c < first){ cell.className = "shiftEmptyCell"; continue; }
+      if(day > total){ cell.className = "shiftEmptyCell"; continue; }
+
+      const date = new Date(year, month, day);
+      const shiftKey = getShiftForDate(date);
+      const shiftClass = shiftClassFromKey(shiftKey);
+      const names = getGroupForDate(shiftKey, date);
+
+      cell.className = shiftClass;
+
+      const dateLabel = (lang === "ar") ? `${month+1}/${day}` : `${day}/${month+1}`;
+
+      // ✅ اختيار 2: الأسماء فقط داخل الشيفت (بدون كود المجموعة)
+      cell.innerHTML = `
+        <div class="shiftDayNumber">${dateLabel}</div>
+        <div class="monthlyShiftCode">${shiftKey}</div>
+        <div class="monthlyShiftNames">${names.join("<br>")}</div>
+      `;
+
+      if(date.toDateString() === new Date().toDateString()){
+        cell.classList.add("shiftToday");
+      }
+
+      day++;
+    }
+  }
+}
+
+/* ================= PDF ================= */
+function exportMonthlyShiftPDF(){
+  const { jsPDF } = window.jspdf;
+  const printArea = document.getElementById("monthlyShiftPrintArea");
+
+  document.body.classList.add("monthlyShiftPdfMode");
+
+  html2canvas(printArea, { scale: 4 }).then(canvas => {
+    const imgData = canvas.toDataURL("image/jpeg", 1);
+    const pdf = new jsPDF("landscape", "mm", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const marginSide = 25;
+    const usableWidth = pageWidth - marginSide * 2;
+    const ratio = usableWidth / canvas.width;
+    const drawWidth = canvas.width * ratio;
+    const drawHeight = canvas.height * ratio;
+
+    pdf.addImage(imgData, "JPEG", marginSide, 65, drawWidth, drawHeight);
+
+    const year = document.getElementById("monthlyShiftYearInput").value;
+    const monthIndex = parseInt(document.getElementById("monthlyShiftMonthSelect").value);
+    const monthName = (lang === "ar") ? MONTHLY_SHIFT_MONTHS_AR[monthIndex] : MONTHLY_SHIFT_MONTHS_EN[monthIndex];
+
+    const fileName = (lang === "ar")
+      ? `جدول-نوبات-${monthName}-${year}.pdf`
+      : `Shift-Schedule-${monthName}-${year}.pdf`;
+
+    pdf.save(fileName);
+    document.body.classList.remove("monthlyShiftPdfMode");
+  });
+}
+
+function autofillYear(){
+  document.getElementById("monthlyShiftYearInput").value = new Date().getFullYear();
+}
+
+/* ================= INIT ================= */
+fillMonthlyShiftMonths();
+generateMonthlyShiftSchedule();
+monthlyShiftYearInput.onchange = generateMonthlyShiftSchedule;
+monthlyShiftMonthSelect.onchange = generateMonthlyShiftSchedule;
+</script>
+
+</body>
+</html>
+
+
